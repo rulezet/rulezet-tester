@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/images/rulezet-tester.svg" width="360" alt="Rulezet Tester">
+</p>
+
 # rulezet-tester
 
 Run detection rules on **sample sets**, in a **sandbox**, and see for each sample whether the rule
