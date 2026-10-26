@@ -207,7 +207,7 @@ subprocesses, inside the same sandbox; their binary folder is added to the read-
 |---|---|---|
 | 1 | Contract, YARA driver, bwrap sandbox, folder store, service, HTTP, CLI | done |
 | 2 | Test panel in rulezet-editor (live rows, hits → jump to the string) | done |
-| 3 | Rulezet: `/editor-api/test` (done, memory registry); sets and results in the database, DB registry, job executor, "test on Create" | in progress |
-| 4 | Relevance: choose malicious sets from the rule's tags / CVE / ATT&CK | |
+| 3 | Rulezet: `/editor-api/test`, DB registry, "test on Create", results per rule version + badge (done); sample sets themselves stay folders | done |
+| 4 | Relevance: choose the sets from the rule (file type it targets, tags / CVE / ATT&CK) — next, see Rulezet's docs/future/yara_editor.md §8 | |
 | 5 | Lab VM for real malware: encrypted samples scanned in memory, SSH agent + `RemoteLab`, provisioning, `lab-check`, MalwareBazaar import ([lab.md](lab.md)) | done (provisioning not yet run on a real VM) |
 | 6 | Suricata driver (pcap) — proof that a new format needs nothing else | |
