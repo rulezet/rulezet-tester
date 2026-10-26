@@ -1,0 +1,101 @@
+# rulezet-tester
+
+Run detection rules on **sample sets**, in a **sandbox**, and see for each sample whether the rule
+fired: detections, misses, **false positives**, timeouts.
+
+One pipeline for every rule format; only a small *driver* changes per format (YARA today;
+Suricata, Sigma, Zeek… next). Used by:
+
+- [rulezet-editor](https://github.com/rulezet/rulezet-editor): the **Test** panel, live while you
+  write a rule;
+- [Rulezet](https://github.com/ngsoti/rulezet-core): the Lab (rule pages, bundles, scores);
+- anything else: the CLI (CI pipelines), the HTTP API, or the Python API.
+
+> Status: 0.1.0 — YARA driver, bubblewrap sandbox, folder sample store, CLI, HTTP API.
+> Design and security: [docs/design.md](docs/design.md).
+
+## Quick start
+
+```bash
+sudo apt install bubblewrap            # the sandbox
+pip install -e ".[yara,web]"           # from a clone
+
+rulezet-tester sets
+rulezet-tester run my_rules.yar --set benign-text --set synthetic-yara
+```
+
+```
+match           synthetic-yara/PE header (MZ + DOS stub)  $mz
+FALSE POSITIVE  benign-text/gnu_agpl_license.txt          $lic
+clean           benign-text/backup.sh
+{"total": 9, "done": 9, "detected": 0, "missed": 0, "false_positives": 1, ...}
+```
+
+`run` exits with **1** when a sample gives a false positive or a miss, **2** when the run cannot
+start: drop it in a CI job.
+
+Your own samples: `--samples /srv/samples` (repeatable), one folder per set (see below).
+
+## Python
+
+```python
+from rulezet_tester import FolderSampleStore, Sandbox, TestService
+
+service = TestService(FolderSampleStore('/srv/samples'), Sandbox())      # bwrap by default
+run = service.start('yara', rules_text, ['benign-linux', 'emotet-2025'], owner=user_id)
+service.state(run['id'], owner=user_id)      # poll: each sample turns from pending to a verdict
+```
+
+## HTTP
+
+```python
+from rulezet_tester.web import create_blueprint
+app.register_blueprint(create_blueprint(service, owner=lambda: current_user.id), url_prefix='/test')
+```
+
+| | |
+|---|---|
+| `GET /test/sets?format=yara` | `{ available, sets }` |
+| `POST /test/` `{ format, text, sets }` | `202` run, every sample `pending` |
+| `GET /test/<run id>` | the run; poll until `status` is `done` or `failed` |
+
+Standalone: `rulezet-tester serve` (http://127.0.0.1:5175/test/).
+
+## Sample sets
+
+```
+/srv/samples/
+  benign-linux/
+    set.json        { "name": "Benign — Linux binaries", "format": "yara", "kind": "benign",
+                      "labels": {}, "tlp": "clear", "source": "debian 13" }
+    samples.json    optional: [{ "file": "...", "label": "...", "expected": "match" | "no_match" }]
+    <files>
+```
+
+`kind`: `benign` (must not match → false positives), `malicious` (should match → detections and
+misses), `synthetic` (crafted files, no expected result unless `samples.json` says so).
+
+Two safe sets ship in `samples/`: `synthetic-yara` and `benign-text`. **Never commit real
+malware to this repository.**
+
+## Security in one paragraph
+
+The process that serves requests never opens a sample. Each run starts a worker inside
+bubblewrap: no network, its own namespaces, a read-only file system holding only Python, this
+package and the chosen sample folders (no home, no `.env`, no database), a clean environment,
+no capabilities, memory / CPU / file limits, nothing written, a timeout per sample and per run.
+Results carry verdicts, rule items and offsets — never sample bytes. Details:
+[docs/design.md](docs/design.md#4-security).
+
+## Development
+
+```bash
+pip install -e ".[dev]"
+pytest
+```
+
+Adding a format: [docs/design.md](docs/design.md#5-adding-a-format).
+
+## License
+
+GNU Affero General Public License v3.0, see [LICENSE](LICENSE).

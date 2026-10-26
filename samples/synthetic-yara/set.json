@@ -1,0 +1,9 @@
+{
+  "name": "Synthetic — YARA basics",
+  "format": "yara",
+  "kind": "synthetic",
+  "description": "Small crafted files, safe: a PE header, ASCII and UTF-16 strings, a URL, a base64 blob. No expected result: they show what a rule matches.",
+  "labels": {},
+  "tlp": "clear",
+  "source": "rulezet-editor"
+}

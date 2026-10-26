@@ -1,0 +1,7 @@
+[
+  { "file": "pe_header.bin", "label": "PE header (MZ + DOS stub)" },
+  { "file": "downloader_strings.txt", "label": "Downloader strings (URL + API name)" },
+  { "file": "utf16_string.bin", "label": "UTF-16 \"powershell -enc\"" },
+  { "file": "base64_blob.txt", "label": "Base64 blob" },
+  { "file": "plain.txt", "label": "Plain text, nothing suspicious" }
+]

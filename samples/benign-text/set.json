@@ -1,0 +1,9 @@
+{
+  "name": "Benign — text files",
+  "format": "yara",
+  "kind": "benign",
+  "description": "Ordinary text files (licence, config, README). A rule that matches here is too broad.",
+  "labels": {},
+  "tlp": "clear",
+  "source": "rulezet-editor"
+}

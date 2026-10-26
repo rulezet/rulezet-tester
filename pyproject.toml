@@ -1,0 +1,27 @@
+[project]
+name = "rulezet-tester"
+version = "0.1.0"
+description = "Run detection rules on sample sets in a sandbox: detections, misses, false positives"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [{ name = "Theo Geffe" }]
+dependencies = []
+
+[project.optional-dependencies]
+yara = ["yara-python>=4.3"]
+web = ["flask>=2.3"]
+dev = ["pytest>=7", "yara-python>=4.3", "flask>=2.3"]
+
+[project.scripts]
+rulezet-tester = "rulezet_tester.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["rulezet_tester*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

