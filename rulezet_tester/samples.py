@@ -23,34 +23,55 @@ FolderSampleStore reads a folder, one sub-folder per set:
     <root>/<set id>/samples.json    optional: [{ file, label?, expected? }]; default: every file
     <root>/<set id>/<files>         named freely; real malware should be named by sha256, no extension
 
-System-folder sets (benign only): set.json has "path": "/usr/bin" (and optionally "max": 500).
-The files of that installed system folder are scanned where they are, read-only, without a copy:
-the best false-positive check, always up to date with the machine. Only folders under /usr are
-accepted (SYSTEM_ROOTS), symlinks are followed only when they stay there, no recursion.
+System-folder sets (benign only): set.json has "path": "/usr/bin" (or "paths": [...]) and
+optionally "max": 500. The files of those installed system folders are scanned where they are,
+read-only, without a copy: the best false-positive check, always up to date with the machine.
+Only folders under /usr are accepted (SYSTEM_ROOTS), symlinks are followed only when they stay
+there. With "recursive": true the folders are walked; with "types": ["pdf", "ole"] only files of
+those types are kept (recognised from their first bytes, filetypes.py) — e.g. every PDF and Office
+document of /usr/share, or later every pcap of a folder for Suricata. "scan_limit" bounds the walk
+(default 1000000 names); the list is cached (SYSTEM_CACHE_SECONDS) so a page never waits for it.
 
 A host with its own database (Rulezet) can subclass SampleStore, or keep the files in a
 FolderSampleStore and only add its own metadata on top.
 """
 import hashlib
 import json
+import os
 import re
+import time
 from pathlib import Path
+
+from .filetypes import TYPES, detect_file, extensions
 
 KINDS = ('benign', 'malicious', 'synthetic')
 SYSTEM_ROOTS = (Path('/usr'),)
+SYSTEM_CACHE_SECONDS = 6 * 3600
+_system_cache = {}          # (folders, types, recursive, max) -> (time, entries)
 _SET_ID = re.compile(r'^[A-Za-z0-9][A-Za-z0-9_.-]{0,99}$')
 
 
 def _system_folder(meta):
-    """The installed system folder a benign set points at, or None (refused when outside /usr)."""
-    raw = meta.get('path')
-    if not raw:
+    """The installed system folders a benign set points at ("path" or "paths"), or None: a folder
+    outside /usr refuses the whole set."""
+    raw = meta.get('paths') or ([meta['path']] if meta.get('path') else [])
+    if not raw or not isinstance(raw, list):
         return None
-    try:
-        folder = Path(raw).resolve()
-    except OSError:
-        return None
-    return folder if folder.is_dir() and any(folder == r or r in folder.parents for r in SYSTEM_ROOTS) else None
+    folders = []
+    for item in raw:
+        try:
+            folder = Path(str(item)).resolve()
+        except OSError:
+            return None
+        if not any(folder == r or r in folder.parents for r in SYSTEM_ROOTS):
+            return None
+        if folder.is_dir():
+            folders.append(folder)
+    return tuple(folders) or None
+
+
+def _inside_system(real):
+    return any(r in real.parents for r in SYSTEM_ROOTS)
 
 
 def _valid_sha(value):
@@ -79,9 +100,12 @@ def _sha256(path):
 
 
 class FolderSampleStore(SampleStore):
-    def __init__(self, *roots, max_size=50 * 1024 * 1024):
+    def __init__(self, *roots, max_size=50 * 1024 * 1024, system_sets=True):
         self.roots = [Path(r).resolve() for r in roots if r]
         self.max_size = max_size
+        # system-folder sets show what is installed on the machine (paths, packages): fine on a
+        # workstation or the lab VM, never on a public server — the host switches them off there
+        self.system_sets = system_sets
         self._hashes = {}
 
     def _set_dirs(self):
@@ -100,37 +124,81 @@ class FolderSampleStore(SampleStore):
         kind = meta.get('kind')
         if kind not in KINDS:
             return None
+        if (meta.get('path') or meta.get('paths')) and not self.system_sets:
+            return None             # system-folder sets switched off (public server)
+        system = _system_folder(meta) if kind == 'benign' else None
+        if (meta.get('path') or meta.get('paths')) and not system:
+            return None             # points at a system folder that is refused (outside /usr) or missing
         return {
             'id': d.name, 'name': meta.get('name') or d.name, 'format': (meta.get('format') or '').lower(),
             'kind': kind, 'description': meta.get('description') or '', 'labels': meta.get('labels') or {},
             'tlp': meta.get('tlp') or 'clear', 'source': meta.get('source') or '',
             'encrypted': bool(meta.get('encrypted')),
-            '_system': _system_folder(meta) if kind == 'benign' else None,
+            '_system': system,
             '_max': int(meta['max']) if str(meta.get('max', '')).isdigit() else 500,
+            '_recursive': bool(meta.get('recursive')),
+            '_types': tuple(t for t in (meta.get('types') or []) if t in TYPES),
+            '_scan_limit': int(meta['scan_limit']) if str(meta.get('scan_limit', '')).isdigit() else 1000000,
             '_password': str(meta.get('password') or 'infected') if meta.get('encrypted') else None,
         }
 
-    def _system_entries(self, folder, limit):
-        out, seen = [], set()
-        for p in sorted(folder.iterdir()):
+    def _system_entries(self, s):
+        key = (s['_system'], s['_types'], s['_recursive'], s['_max'])
+        cached = _system_cache.get(key)
+        if cached and time.monotonic() - cached[0] < SYSTEM_CACHE_SECONDS:
+            return cached[1]
+        out = self._walk_system(*key, scan_limit=s['_scan_limit'])
+        _system_cache[key] = (time.monotonic(), out)
+        return out
+
+    def _walk_system(self, folders, types, recursive, limit, scan_limit):
+        exts = extensions(types) if types else None
+        out, seen, scanned = [], set(), 0
+        # several types: each one gets its share of `max`, so 300 PDFs never crowd out the rest
+        share = -(-limit // len(types)) if len(types) > 1 else limit
+        per_type = {}
+
+        def consider(p, folder):
+            nonlocal scanned
+            scanned += 1
+            if exts is not None and not p.name.lower().endswith(exts):
+                return
             try:
                 real = p.resolve()
-                if real in seen or not real.is_file() or not any(r in real.parents for r in SYSTEM_ROOTS):
-                    continue
-                seen.add(real)
+                if real in seen or not real.is_file() or not _inside_system(real):
+                    return
                 size = real.stat().st_size
             except OSError:
-                continue
-            if 0 < size <= self.max_size:
-                out.append(({'file': p.name, 'label': str(p)}, real, size))
-            if len(out) >= limit:
-                break
+                return
+            if not 0 < size <= self.max_size:
+                return
+            kind = detect_file(real) if types else None
+            if types and (kind not in types or per_type.get(kind, 0) >= share):
+                return
+            per_type[kind] = per_type.get(kind, 0) + 1
+            seen.add(real)
+            # id stays short and stable: the path inside its folder (/usr/bin: the program name)
+            out.append(({'file': str(p.relative_to(folder)), 'label': str(p)}, real, size))
+
+        for folder in folders:
+            if recursive:
+                for dirpath, dirnames, filenames in os.walk(folder, followlinks=False):
+                    dirnames.sort()
+                    for name in sorted(filenames):
+                        consider(Path(dirpath) / name, folder)
+                        if len(out) >= limit or scanned >= scan_limit:
+                            return out
+            else:
+                for p in sorted(folder.iterdir()):
+                    consider(p, folder)
+                    if len(out) >= limit or scanned >= scan_limit:
+                        return out
         return out
 
     def _entries(self, d):
         s = self._read_set(d)
         if s and s.get('_system'):
-            return self._system_entries(s['_system'], s['_max'])
+            return self._system_entries(s)
         listed = d / 'samples.json'
         if listed.is_file():
             try:
@@ -159,6 +227,8 @@ class FolderSampleStore(SampleStore):
             s = self._read_set(d)
             if s and (not fmt or s['format'] == fmt):
                 count = len([e for e in self._entries(d) if not s['encrypted'] or _valid_sha(e[0].get('sha256'))])
+                if s.get('_system') and not count:
+                    continue            # nothing of that kind on this machine: not offered
                 out.append({**_public(s), 'count': count})
         return out
 

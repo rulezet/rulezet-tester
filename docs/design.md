@@ -206,6 +206,7 @@ subprocesses, inside the same sandbox; their binary folder is added to the read-
 | Step | Content | Status |
 |---|---|---|
 | 1 | Contract, YARA driver, bwrap sandbox, folder store, service, HTTP, CLI | done |
+| 1b | File types from bytes (`filetypes.py`), system-folder sets by type (documents, PE), `add-set` for any format / kind | done |
 | 2 | Test panel in rulezet-editor (live rows, hits → jump to the string) | done |
 | 3 | Rulezet: `/editor-api/test`, DB registry, "test on Create", results per rule version + badge (done); sample sets themselves stay folders | done |
 | 4 | Relevance: choose the sets from the rule (file type it targets, tags / CVE / ATT&CK) — next, see Rulezet's docs/future/yara_editor.md §8 | |

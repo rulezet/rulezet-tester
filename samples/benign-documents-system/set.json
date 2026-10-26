@@ -1,0 +1,13 @@
+{
+  "name": "Benign — documents of this machine (PDF, Office, OpenDocument, RTF)",
+  "format": "yara",
+  "kind": "benign",
+  "paths": ["/usr/share"],
+  "recursive": true,
+  "types": ["pdf", "ole", "ooxml", "odf", "rtf"],
+  "max": 300,
+  "description": "PDF, Office (doc / xls / docx…), OpenDocument and RTF files installed under /usr/share (package documentation, examples), recognised from their bytes and scanned where they are (read-only, no copy). A document rule that matches here is too broad: false positive.",
+  "labels": {"platform": "documents"},
+  "tlp": "clear",
+  "source": "the machine that runs the tests"
+}

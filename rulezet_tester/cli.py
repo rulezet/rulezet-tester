@@ -5,6 +5,7 @@ rulezet-tester command line.
     rulezet-tester run   rules.yar --set benign-text --set synthetic-yara [--samples DIR] [--json]
     rulezet-tester serve [--samples DIR] [--port 5175]
     rulezet-tester benign-set DEST [--max 300]       benign set from this machine's /usr files
+    rulezet-tester add-set DEST --format F --kind K FILES...   your own samples (README: Add your samples)
     rulezet-tester lab-agent --config FILE           the lab VM's forced SSH command (docs/lab.md)
     rulezet-tester lab-check --config FILE           is this VM fit to hold real samples?
     rulezet-tester fetch-bazaar DEST --signature X   real samples from MalwareBazaar (lab VM only)
@@ -53,6 +54,21 @@ def main(argv=None):
     p_benign.add_argument('dest', type=Path, help='new set folder, e.g. /srv/samples/benign-linux')
     p_benign.add_argument('--max', type=int, default=300)
 
+    p_add = sub.add_parser('add-set', help='add your own samples to a set (created when new)')
+    p_add.add_argument('dest', type=Path, help='set folder, e.g. /srv/samples/goodware-windows')
+    p_add.add_argument('files', nargs='+', type=Path, help='files or folders (walked)')
+    p_add.add_argument('--format', required=True, help='rule format the set is for: yara, suricata…')
+    p_add.add_argument('--kind', required=True, choices=['benign', 'malicious', 'synthetic'])
+    p_add.add_argument('--name', help='set name shown in the Test panel (new set)')
+    p_add.add_argument('--description', default='')
+    p_add.add_argument('--label', action='append', default=[], help='key=value (repeatable), e.g. platform=windows')
+    p_add.add_argument('--tlp', default='clear')
+    p_add.add_argument('--source', default='', help='where the samples come from')
+    p_add.add_argument('--expected', choices=['match', 'no_match'], help='synthetic sets: what the rule should do')
+    p_add.add_argument('--sha256', help='malicious: the sample sha256 when the zip is not named <sha256>.zip')
+    p_add.add_argument('--password', default='infected', help='malicious: zip password (default infected)')
+    p_add.add_argument('--config', default=None, help='lab config: required for malicious sets (lab VM only)')
+
     p_agent = sub.add_parser('lab-agent', help='answer one request on stdin (forced SSH command on the lab VM)')
     p_agent.add_argument('--config', default=None)
     p_check = sub.add_parser('lab-check', help='verify the lab VM (non-root, sandbox, no network, read-only samples)')
@@ -88,6 +104,21 @@ def main(argv=None):
     if args.command == 'lab-check':
         from .lab import check
         return check(args.config)
+
+    if args.command == 'add-set':
+        from .addset import AddSetError, add_set
+        from .lab import load_config
+        labels = dict(item.split('=', 1) for item in args.label if '=' in item)
+        roots = load_config(args.config)['samples'] if args.config else None
+        try:
+            n = add_set(args.dest, args.files, fmt=args.format.lower(), kind=args.kind, name=args.name,
+                        description=args.description, labels=labels, tlp=args.tlp, source=args.source,
+                        expected=args.expected, sha256=args.sha256, password=args.password, allowed_roots=roots)
+        except AddSetError as e:
+            print(e, file=sys.stderr)
+            return 2
+        print(f'{n} sample(s) added to {args.dest}; use it with --samples {args.dest.parent}')
+        return 0
 
     if args.command == 'benign-set':
         from .benign import build

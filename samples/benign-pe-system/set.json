@@ -1,0 +1,13 @@
+{
+  "name": "Benign — Windows executables (PE) of this machine",
+  "format": "yara",
+  "kind": "benign",
+  "paths": ["/usr"],
+  "recursive": true,
+  "types": ["pe"],
+  "max": 300,
+  "description": "Every PE file installed under /usr (UEFI loaders, Wine and Mono libraries, Python launchers…), recognised from its bytes and scanned where it is (read-only, no copy). Few on a plain Linux server: for a real Windows goodware set, add one with `rulezet-tester add-set` (README).",
+  "labels": {"platform": "windows"},
+  "tlp": "clear",
+  "source": "the machine that runs the tests"
+}
