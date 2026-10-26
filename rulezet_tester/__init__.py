@@ -11,11 +11,12 @@ See docs/design.md.
 from .drivers import DRIVERS, Driver, DriverError, YaraDriver, get_driver
 from .runs import MemoryRegistry, TestError, TestService, outcome
 from .samples import FolderSampleStore, SampleStore
+from .remote import RemoteLab
 from .sandbox import Sandbox, SandboxUnavailable
 
 __version__ = '0.1.0'
 
 __all__ = [
-    'DRIVERS', 'Driver', 'DriverError', 'FolderSampleStore', 'MemoryRegistry', 'SampleStore', 'Sandbox',
+    'DRIVERS', 'Driver', 'DriverError', 'FolderSampleStore', 'MemoryRegistry', 'RemoteLab', 'SampleStore', 'Sandbox',
     'SandboxUnavailable', 'TestError', 'TestService', 'YaraDriver', 'get_driver', 'outcome',
 ]

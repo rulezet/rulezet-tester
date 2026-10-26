@@ -1,0 +1,14 @@
+[
+  {
+    "file": "pdf_openaction_js.pdf",
+    "label": "PDF with /OpenAction /JavaScript (shows an alert)"
+  },
+  {
+    "file": "pdf_clean.pdf",
+    "label": "Clean PDF (no action, no JavaScript)"
+  },
+  {
+    "file": "html_smuggling.html",
+    "label": "HTML smuggling: base64 blob turned into a download (a text file)"
+  }
+]

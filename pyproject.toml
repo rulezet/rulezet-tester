@@ -11,7 +11,8 @@ dependencies = []
 [project.optional-dependencies]
 yara = ["yara-python>=4.3"]
 web = ["flask>=2.3"]
-dev = ["pytest>=7", "yara-python>=4.3", "flask>=2.3"]
+lab = ["pyzipper>=0.3.6"]
+dev = ["pytest>=7", "yara-python>=4.3", "flask>=2.3", "pyzipper>=0.3.6"]
 
 [project.scripts]
 rulezet-tester = "rulezet_tester.cli:main"

@@ -1,0 +1,10 @@
+{
+  "samples": ["/srv/rulezet-lab/samples"],
+  "include_shipped": true,
+  "sandbox": "bwrap",
+  "memory_mb": 1024,
+  "cpu_seconds": 600,
+  "sample_timeout": 10,
+  "wall_seconds": 900,
+  "max_samples": 2000
+}

@@ -1,0 +1,11 @@
+{
+  "name": "Synthetic \u2014 documents",
+  "format": "yara",
+  "kind": "synthetic",
+  "description": "PDF with an OpenAction JavaScript (app.alert only), HTML smuggling page and a clean PDF. Inert. (No \"invoice.pdf.exe\" in a ZIP: antivirus heuristics flag it even when it is harmless.)",
+  "labels": {
+    "file_type": "document"
+  },
+  "tlp": "clear",
+  "source": "rulezet-tester (scripts/make_synthetic.py)"
+}

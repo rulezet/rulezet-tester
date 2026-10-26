@@ -1,0 +1,1 @@
+powershell.exe -NoProfile -WindowStyle Hidden -EncodedCommand VwByAGkAdABlAC0ATwB1AHQAcAB1AHQAIAByAHUAbABlAHoAZQB0AC0AdABlAHMAdAA=

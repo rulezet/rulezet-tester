@@ -1,0 +1,26 @@
+[
+  {
+    "file": "pe_minimal.exe",
+    "label": "Minimal PE (imports ExitProcess only)"
+  },
+  {
+    "file": "pe_injection_imports.exe",
+    "label": "Process injection imports (VirtualAllocEx, WriteProcessMemory, CreateRemoteThread)"
+  },
+  {
+    "file": "pe_packed_upx_like.exe",
+    "label": "Packer look-alike: UPX0 / UPX1 sections, \"UPX!\" marker, high-entropy section"
+  },
+  {
+    "file": "pe_downloader.exe",
+    "label": "Downloader traits: URLDownloadToFileA, WinINet imports, URL and user agent"
+  },
+  {
+    "file": "pe_ransom_strings.exe",
+    "label": "Ransomware strings: ransom note, extension, shadow copy deletion (strings only)"
+  },
+  {
+    "file": "pe_console_dropper.exe",
+    "label": "Console PE with an embedded MZ blob (dropper look-alike)"
+  }
+]

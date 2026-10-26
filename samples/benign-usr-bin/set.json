@@ -1,0 +1,11 @@
+{
+  "name": "Benign — /usr/bin of this machine",
+  "format": "yara",
+  "kind": "benign",
+  "path": "/usr/bin",
+  "max": 500,
+  "description": "The programs installed in /usr/bin, scanned where they are (read-only, no copy). A rule that matches here is too broad: false positive.",
+  "labels": {"platform": "linux"},
+  "tlp": "clear",
+  "source": "the machine that runs the tests"
+}

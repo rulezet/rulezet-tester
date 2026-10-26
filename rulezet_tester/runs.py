@@ -90,25 +90,30 @@ class TestService:
         return self.sandbox.check()
 
     def formats(self):
-        return [f for f, d in DRIVERS.items() if d.available()] if not self.unavailable() else []
+        """Formats that can run: the sandbox's own list when it is remote (the lab VM), else the
+        engines installed here."""
+        if self.unavailable():
+            return []
+        remote = getattr(self.sandbox, 'formats', None)
+        return remote() if callable(remote) else [f for f, d in DRIVERS.items() if d.available()]
 
     def sets(self, fmt):
-        return self.store.sets(fmt) if get_driver(fmt) else []
+        return self.store.sets(fmt) if fmt in self.formats() else []
 
     # ── start / follow ────────────────────────────────────────────────────────────
     def start(self, fmt, text, set_ids, owner=None):
-        driver = get_driver(fmt)
-        if not driver:
-            raise TestError(f'No test engine for {fmt} on this server.')
         reason = self.unavailable()
         if reason:
             raise TestError('Tests are not available on this server.')
+        if fmt not in self.formats():
+            raise TestError(f'No test engine for {fmt} on this server.')
+        driver = get_driver(fmt)            # None when the engine only exists on the lab VM
         text = text if isinstance(text, str) else ''
         if not text.strip():
             raise TestError('No rule to test.')
         if len(text) > self.max_rule_size:
             raise TestError(f'Rules too large (max {self.max_rule_size // 1024} KB).')
-        refused = driver.check_rule(text)
+        refused = driver.check_rule(text) if driver else None
         if refused:
             raise TestError(refused)
         known = {s['id']: s for s in self.store.sets(fmt)}
@@ -128,14 +133,14 @@ class TestService:
             'created': time.time(), 'finished': None,
             'sets': [{'id': s['id'], 'name': s['name'], 'kind': s['kind'], 'labels': s.get('labels') or {},
                       'total': 0, 'done': 0, 'matched': 0, 'false_positives': 0, 'missed': 0} for s in chosen],
-            'samples': [{k: v for k, v in smp.items() if k != 'path'} | {'verdict': 'pending', 'outcome': None, 'hits': [], 'time_ms': None}
+            'samples': [{k: v for k, v in smp.items() if k not in ('path', 'zip')} | {'verdict': 'pending', 'outcome': None, 'hits': [], 'hit_total': 0, 'time_ms': None}
                         for smp in samples],
         }
         for s in run['sets']:
             s['total'] = sum(1 for smp in samples if smp['set'] == s['id'])
         self._summarise(run)
         self.registry.save(run)
-        paths = [{'id': smp['id'], 'path': smp['path']} for smp in samples]
+        paths = [{k: smp[k] for k in ('id', 'path', 'zip', 'sha256') if k in smp} for smp in samples]
         self.executor(lambda: self._execute(run['id'], fmt, text, paths))
         return self.public(run)
 
@@ -163,6 +168,7 @@ class TestService:
                 if kind == 'sample' and event.get('id') in by_id:
                     smp = by_id[event['id']]
                     smp.update(verdict=event.get('verdict', 'error'), hits=event.get('hits') or [],
+                               hit_total=event.get('hit_total', len(event.get('hits') or [])),
                                time_ms=event.get('time_ms'), error=event.get('error'))
                     smp['outcome'] = outcome(smp['expected'], smp['verdict'])
                     self._summarise(run)

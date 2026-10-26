@@ -1,0 +1,12 @@
+{
+  "name": "Synthetic \u2014 Windows PE",
+  "format": "yara",
+  "kind": "synthetic",
+  "description": "Parseable PE32 files whose only code is `ret`: a clean one, then one trait each (injection imports, packer sections, downloader, ransom-note strings, dropper). Inert.",
+  "labels": {
+    "platform": "windows",
+    "file_type": "pe"
+  },
+  "tlp": "clear",
+  "source": "rulezet-tester (scripts/make_synthetic.py)"
+}

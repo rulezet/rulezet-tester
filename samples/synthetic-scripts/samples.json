@@ -1,0 +1,34 @@
+[
+  {
+    "file": "powershell_encoded.ps1",
+    "label": "PowerShell -EncodedCommand, hidden window"
+  },
+  {
+    "file": "powershell_cradle.ps1",
+    "label": "PowerShell download cradle (IEX + Net.WebClient) to a TEST-NET address"
+  },
+  {
+    "file": "js_eval_atob.js",
+    "label": "JavaScript eval(atob(...))"
+  },
+  {
+    "file": "php_eval_base64.php",
+    "label": "PHP eval(base64_decode(...)) (web shell pattern)"
+  },
+  {
+    "file": "vba_autoopen.bas",
+    "label": "VBA macro with AutoOpen and CreateObject(\"WScript.Shell\")"
+  },
+  {
+    "file": "bash_curl_pipe.sh",
+    "label": "curl | sh installer pattern to a .test domain"
+  },
+  {
+    "file": "windows_lolbins.txt",
+    "label": "LOLBin command lines (certutil, mshta, regsvr32) to TEST-NET addresses"
+  },
+  {
+    "file": "plain_admin_script.ps1",
+    "label": "Ordinary admin PowerShell (no suspicious pattern)"
+  }
+]

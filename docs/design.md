@@ -60,7 +60,8 @@ What `start()` and `state()` return, and what the HTTP API sends:
     { "id": "benign-text/gnu_agpl_license.txt", "set": "benign-text", "label": "gnu_agpl_license.txt",
       "sha256": "…", "size": 34523, "expected": "no_match",
       "verdict": "match", "outcome": "false_positive", "time_ms": 1,
-      "hits": [{ "rule": "t", "item": "$lic", "where": { "kind": "offset", "offset": 112, "length": 3 } }] }
+      "hit_total": 17,
+      "hits": [{ "rule": "t", "item": "$lic", "where": { "kind": "offset", "offset": 112, "length": 3 }, "data": "474e55" }] }
   ],
   "summary": { "total": 9, "done": 9, "detected": 0, "missed": 0, "false_positives": 1,
                "clean": 3, "timeouts": 0, "errors": 0 }
@@ -79,6 +80,9 @@ What `start()` and `state()` return, and what the HTTP API sends:
   | `unknown` | matched | not_matched |
 
   plus `timeout` and `error`.
+- `hits` holds at most 50 hits per sample; `hit_total` is the real count. `data` is the matched
+  bytes in hex (at most 64), `before` / `after` the 32 bytes around them, so a UI can show the
+  match in its surroundings. Never more of the sample than that.
 - Only `hits[].where` depends on the format. `item` is the part of the rule that matched
   (YARA: the string id), so a UI can jump to it.
 
@@ -171,7 +175,8 @@ the environment holds only `LC_CTYPE` and `PWD`.
 - Kept on the machine that runs the sandbox, outside any web root, read-only for the service.
 - Real malware: named by sha256, no extension; the folder excluded from the host antivirus on
   purpose (it would quarantine them) — document it on the machine.
-- **Never served.** Results carry hashes, sizes, rule items and offsets only. A download, if a
+- **Never served.** Results carry hashes, sizes, rule items, offsets, the matched bytes (≤ 64 per hit) and 32 bytes
+  of context on each side — never the sample itself. A download, if a
   host ever adds one, is the host's decision: admins, password-protected archive, logged.
 - Separate from the host's backups (or a separate encrypted backup).
 - Real malware only once the sandbox runs on a **separate machine or VM** (`command=`); the
@@ -201,8 +206,8 @@ subprocesses, inside the same sandbox; their binary folder is added to the read-
 | Step | Content | Status |
 |---|---|---|
 | 1 | Contract, YARA driver, bwrap sandbox, folder store, service, HTTP, CLI | done |
-| 2 | Test panel in rulezet-editor (live rows, hits → jump to the string) | next |
-| 3 | Rulezet: `/editor-api/test`, sets and results in the database, DB registry, job executor, "test on Create" | |
+| 2 | Test panel in rulezet-editor (live rows, hits → jump to the string) | done |
+| 3 | Rulezet: `/editor-api/test` (done, memory registry); sets and results in the database, DB registry, job executor, "test on Create" | in progress |
 | 4 | Relevance: choose malicious sets from the rule's tags / CVE / ATT&CK | |
-| 5 | Remote sandbox (`command=`) for the lab machine with real malware | |
+| 5 | Lab VM for real malware: encrypted samples scanned in memory, SSH agent + `RemoteLab`, provisioning, `lab-check`, MalwareBazaar import ([lab.md](lab.md)) | done (provisioning not yet run on a real VM) |
 | 6 | Suricata driver (pcap) — proof that a new format needs nothing else | |

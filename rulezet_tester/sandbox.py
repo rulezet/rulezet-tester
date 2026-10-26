@@ -96,7 +96,8 @@ class Sandbox:
             raise SandboxUnavailable(reason)
         dirs = {str(Path(s['path']).resolve().parent) for s in samples}
         job = {'format': fmt, 'rule': rule, 'timeout': self.sample_timeout,
-               'samples': [{'id': s['id'], 'path': str(Path(s['path']).resolve())} for s in samples]}
+               'samples': [{'id': s['id'], 'path': str(Path(s['path']).resolve()),
+                            **({'zip': s['zip'], 'sha256': s['sha256']} if s.get('zip') else {})} for s in samples]}
         env = {'PATH': '/usr/bin:/bin', 'LANG': 'C.UTF-8'}
         proc = subprocess.Popen(self.argv(dirs), stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                 stderr=subprocess.DEVNULL, env=env, cwd='/tmp', text=True,

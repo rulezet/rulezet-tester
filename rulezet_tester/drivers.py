@@ -5,13 +5,18 @@ and where. It only runs inside the sandboxed worker (worker.py), never in the we
     prepare(rule_text)               -> compiled rule (once per run), raises DriverError
     run(prepared, path, timeout)     -> { verdict: match | no_match | timeout | error, hits, error? }
 
-A hit is { rule, item, where: { kind, ... } }: `item` is what matched inside the rule (YARA: the
-string id), `where` is format-specific (YARA: { kind: 'offset', offset, length }). The verdicts
-and the shape are the same for every format; only `where` changes.
+A hit is { rule, item, where: { kind, ... }, data? }: `item` is what matched inside the rule (YARA:
+the string id), `where` is format-specific (YARA: { kind: 'offset', offset, length }), `data` the
+matched bytes in hex, at most MAX_HIT_BYTES, and `before` / `after` the CONTEXT_BYTES around them
+(hex), so a UI can show the match in its surroundings. Never more of the sample than that.
+A run result also has `hit_total` when there were more hits than MAX_HITS.
+The verdicts and the shape are the same for every format; only `where` changes.
 """
 import importlib
 
 MAX_HITS = 50                 # per sample: enough to show, never the whole file
+MAX_HIT_BYTES = 64            # matched bytes returned per hit (what the rule's own string matched)
+CONTEXT_BYTES = 32            # bytes shown before / after a match, so a reader sees where it hit
 
 
 class DriverError(Exception):
@@ -42,6 +47,10 @@ class Driver:
     def run(self, prepared, path, timeout):
         raise NotImplementedError
 
+    def run_data(self, prepared, data, timeout):
+        """Same as run() on bytes already in memory (decrypted samples: never written to disk)."""
+        raise NotImplementedError
+
 
 class YaraDriver(Driver):
     format = 'yara'
@@ -66,24 +75,45 @@ class YaraDriver(Driver):
             raise DriverError(str(e)) from e
 
     def run(self, prepared, path, timeout):
+        def read(offset, size):
+            with open(path, 'rb') as f:
+                f.seek(offset)
+                return f.read(size)
+        return self._match(prepared, timeout, read, filepath=path)
+
+    def run_data(self, prepared, data, timeout):
+        return self._match(prepared, timeout, lambda offset, size: data[offset:offset + size], data=data)
+
+    def _match(self, prepared, timeout, read, **target):
         import yara
         try:
-            matches = prepared.match(path, timeout=max(1, int(timeout)), fast=False)
+            matches = prepared.match(**target, timeout=max(1, int(timeout)), fast=False)
         except yara.TimeoutError:
             return {'verdict': 'timeout', 'hits': []}
         except yara.Error as e:
             return {'verdict': 'error', 'hits': [], 'error': str(e)}
-        hits = []
+        hits, total = [], 0
         for m in matches:
             if not m.strings:
+                total += 1
                 hits.append({'rule': m.rule, 'item': None, 'where': {'kind': 'file'}})
             for s in m.strings:
                 for inst in s.instances:
+                    total += 1
                     if len(hits) >= MAX_HITS:
-                        break
+                        continue
+                    start = max(0, inst.offset - CONTEXT_BYTES)
+                    shown = min(inst.matched_length, MAX_HIT_BYTES)
+                    try:
+                        after = read(inst.offset + inst.matched_length, CONTEXT_BYTES)
+                        before = read(start, inst.offset - start)
+                    except OSError:
+                        before = after = b''
                     hits.append({'rule': m.rule, 'item': s.identifier,
-                                 'where': {'kind': 'offset', 'offset': inst.offset, 'length': inst.matched_length}})
-        return {'verdict': 'match' if matches else 'no_match', 'hits': hits}
+                                 'where': {'kind': 'offset', 'offset': inst.offset, 'length': inst.matched_length},
+                                 'data': bytes(inst.matched_data[:shown]).hex(),
+                                 'before': before.hex(), 'after': after.hex()})
+        return {'verdict': 'match' if matches else 'no_match', 'hits': hits, 'hit_total': total}
 
 
 DRIVERS = {d.format: d for d in (YaraDriver(),)}

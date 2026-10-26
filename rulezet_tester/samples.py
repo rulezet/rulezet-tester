@@ -8,11 +8,25 @@ it never parses a sample (only the sandboxed worker opens them for the engine).
 kind: 'benign' (must not match: false positives), 'malicious' (should match), 'synthetic'
 (crafted test files, each with its own `expected`).
 
+Encrypted sets (real malware): set.json has "encrypted": true (and "password", default
+"infected", the convention of malware repositories). Every sample is then a zip holding exactly
+one file, listed in samples.json with the sha256 of that file:
+    [{ "file": "<sha256>.zip", "sha256": "<sha256>", "label": "...", "size": 12345 }]
+The store never opens these zips: only the sandboxed worker decrypts them, in memory, and checks
+the sha256 before scanning. On disk the samples stay encrypted (no antivirus alert, no accidental
+double-click). An encrypted set must list every sample with its sha256; entries without one are
+ignored.
+
 FolderSampleStore reads a folder, one sub-folder per set:
 
     <root>/<set id>/set.json        { name, format, kind, description?, labels?, tlp?, source? }
     <root>/<set id>/samples.json    optional: [{ file, label?, expected? }]; default: every file
     <root>/<set id>/<files>         named freely; real malware should be named by sha256, no extension
+
+System-folder sets (benign only): set.json has "path": "/usr/bin" (and optionally "max": 500).
+The files of that installed system folder are scanned where they are, read-only, without a copy:
+the best false-positive check, always up to date with the machine. Only folders under /usr are
+accepted (SYSTEM_ROOTS), symlinks are followed only when they stay there, no recursion.
 
 A host with its own database (Rulezet) can subclass SampleStore, or keep the files in a
 FolderSampleStore and only add its own metadata on top.
@@ -23,7 +37,29 @@ import re
 from pathlib import Path
 
 KINDS = ('benign', 'malicious', 'synthetic')
+SYSTEM_ROOTS = (Path('/usr'),)
 _SET_ID = re.compile(r'^[A-Za-z0-9][A-Za-z0-9_.-]{0,99}$')
+
+
+def _system_folder(meta):
+    """The installed system folder a benign set points at, or None (refused when outside /usr)."""
+    raw = meta.get('path')
+    if not raw:
+        return None
+    try:
+        folder = Path(raw).resolve()
+    except OSError:
+        return None
+    return folder if folder.is_dir() and any(folder == r or r in folder.parents for r in SYSTEM_ROOTS) else None
+
+
+def _valid_sha(value):
+    return bool(re.fullmatch(r'[0-9a-f]{64}', str(value or '').lower()))
+
+
+def _public(s):
+    """A set as callers see it: never the zip password."""
+    return {k: v for k, v in s.items() if not k.startswith('_')}
 
 
 class SampleStore:
@@ -68,9 +104,33 @@ class FolderSampleStore(SampleStore):
             'id': d.name, 'name': meta.get('name') or d.name, 'format': (meta.get('format') or '').lower(),
             'kind': kind, 'description': meta.get('description') or '', 'labels': meta.get('labels') or {},
             'tlp': meta.get('tlp') or 'clear', 'source': meta.get('source') or '',
+            'encrypted': bool(meta.get('encrypted')),
+            '_system': _system_folder(meta) if kind == 'benign' else None,
+            '_max': int(meta['max']) if str(meta.get('max', '')).isdigit() else 500,
+            '_password': str(meta.get('password') or 'infected') if meta.get('encrypted') else None,
         }
 
+    def _system_entries(self, folder, limit):
+        out, seen = [], set()
+        for p in sorted(folder.iterdir()):
+            try:
+                real = p.resolve()
+                if real in seen or not real.is_file() or not any(r in real.parents for r in SYSTEM_ROOTS):
+                    continue
+                seen.add(real)
+                size = real.stat().st_size
+            except OSError:
+                continue
+            if 0 < size <= self.max_size:
+                out.append(({'file': p.name, 'label': str(p)}, real, size))
+            if len(out) >= limit:
+                break
+        return out
+
     def _entries(self, d):
+        s = self._read_set(d)
+        if s and s.get('_system'):
+            return self._system_entries(s['_system'], s['_max'])
         listed = d / 'samples.json'
         if listed.is_file():
             try:
@@ -98,7 +158,8 @@ class FolderSampleStore(SampleStore):
         for d in self._set_dirs():
             s = self._read_set(d)
             if s and (not fmt or s['format'] == fmt):
-                out.append({**s, 'count': len(self._entries(d))})
+                count = len([e for e in self._entries(d) if not s['encrypted'] or _valid_sha(e[0].get('sha256'))])
+                out.append({**_public(s), 'count': count})
         return out
 
     def _dir(self, set_id):
@@ -108,7 +169,8 @@ class FolderSampleStore(SampleStore):
 
     def get_set(self, set_id):
         d = self._dir(set_id)
-        return self._read_set(d) if d else None
+        s = self._read_set(d) if d else None
+        return _public(s) if s else None
 
     def samples(self, set_id):
         d = self._dir(set_id)
@@ -118,10 +180,20 @@ class FolderSampleStore(SampleStore):
         default = {'benign': 'no_match', 'malicious': 'match'}.get(s['kind'], 'unknown')
         out = []
         for item, path, size in self._entries(d):
+            expected = item.get('expected') if item.get('expected') in ('match', 'no_match') else default
+            label = str(item.get('label') or path.name)
+            if s['encrypted']:
+                sha = str(item.get('sha256') or '').lower()
+                if not _valid_sha(sha) or path.suffix.lower() != '.zip':
+                    continue
+                out.append({'id': f'{set_id}/{path.name}', 'set': set_id, 'label': label, 'sha256': sha,
+                            'size': int(item['size']) if str(item.get('size', '')).isdigit() else None,
+                            'expected': expected, 'path': str(path),
+                            'zip': {'password': s['_password']}})
+                continue
             key = (str(path), path.stat().st_mtime_ns)
             if key not in self._hashes:
                 self._hashes[key] = _sha256(path)
-            expected = item.get('expected') if item.get('expected') in ('match', 'no_match') else default
-            out.append({'id': f'{set_id}/{path.name}', 'set': set_id, 'label': item.get('label') or path.name,
+            out.append({'id': f"{set_id}/{item.get('file') or path.name}", 'set': set_id, 'label': label,
                         'sha256': self._hashes[key], 'size': size, 'expected': expected, 'path': str(path)})
         return out

@@ -4,6 +4,10 @@ rulezet-tester command line.
     rulezet-tester sets  [--samples DIR] [--format yara]
     rulezet-tester run   rules.yar --set benign-text --set synthetic-yara [--samples DIR] [--json]
     rulezet-tester serve [--samples DIR] [--port 5175]
+    rulezet-tester benign-set DEST [--max 300]       benign set from this machine's /usr files
+    rulezet-tester lab-agent --config FILE           the lab VM's forced SSH command (docs/lab.md)
+    rulezet-tester lab-check --config FILE           is this VM fit to hold real samples?
+    rulezet-tester fetch-bazaar DEST --signature X   real samples from MalwareBazaar (lab VM only)
 
 `run` exits with 1 when a sample gives a false positive or a miss: usable in CI.
 """
@@ -45,7 +49,51 @@ def main(argv=None):
     p_serve.add_argument('--host', default='127.0.0.1')
     p_serve.add_argument('--port', type=int, default=5175)
 
+    p_benign = sub.add_parser('benign-set', help="build a benign set from this machine's system files (/usr)")
+    p_benign.add_argument('dest', type=Path, help='new set folder, e.g. /srv/samples/benign-linux')
+    p_benign.add_argument('--max', type=int, default=300)
+
+    p_agent = sub.add_parser('lab-agent', help='answer one request on stdin (forced SSH command on the lab VM)')
+    p_agent.add_argument('--config', default=None)
+    p_check = sub.add_parser('lab-check', help='verify the lab VM (non-root, sandbox, no network, read-only samples)')
+    p_check.add_argument('--config', default=None)
+
+    p_mb = sub.add_parser('fetch-bazaar', help='import real samples from MalwareBazaar (lab VM, fetch user only)')
+    p_mb.add_argument('dest', type=Path)
+    p_mb.add_argument('--signature', help='malware family, e.g. Emotet')
+    p_mb.add_argument('--tag')
+    p_mb.add_argument('--limit', type=int, default=25)
+    p_mb.add_argument('--max-size', type=int, default=20 * 1024 * 1024)
+    p_mb.add_argument('--auth-key-file', type=Path, required=True, help='file holding the abuse.ch Auth-Key (never on the command line)')
+    p_mb.add_argument('--config', default=None, help='lab config: DEST must be inside its sample folders')
+
     args = parser.parse_args(argv)
+
+    if args.command == 'fetch-bazaar':
+        from .bazaar import BazaarError, fetch
+        from .lab import load_config
+        roots = load_config(args.config)['samples'] if args.config else None
+        try:
+            n = fetch(args.dest, args.auth_key_file.read_text().strip(), signature=args.signature, tag=args.tag,
+                      limit=args.limit, max_size=args.max_size, allowed_roots=roots)
+        except BazaarError as e:
+            print(e, file=sys.stderr)
+            return 2
+        print(f'{n} sample(s) added to {args.dest}')
+        return 0
+
+    if args.command == 'lab-agent':
+        from .lab import agent
+        return agent(args.config)
+    if args.command == 'lab-check':
+        from .lab import check
+        return check(args.config)
+
+    if args.command == 'benign-set':
+        from .benign import build
+        n = build(args.dest, max_files=args.max)
+        print(f'{n} files copied to {args.dest}; use it with --samples {args.dest.parent}')
+        return 0
 
     if args.command == 'sets':
         for s in _service(args).store.sets(args.format):

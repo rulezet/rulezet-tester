@@ -1,0 +1,11 @@
+{
+  "name": "Synthetic \u2014 scripts",
+  "format": "yara",
+  "kind": "synthetic",
+  "description": "Script patterns (encoded PowerShell, download cradles, eval of base64, auto-open macro, LOLBins). Payloads only print \"rulezet test\"; hosts are .test / 192.0.2.x. Never run them anyway.",
+  "labels": {
+    "file_type": "script"
+  },
+  "tlp": "clear",
+  "source": "rulezet-tester (scripts/make_synthetic.py)"
+}
