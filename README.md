@@ -139,7 +139,7 @@ Only folders under `/usr`; several types share `max`; the list is cached for 6 h
 
 **Not on a public server**: these sets show what is installed on the machine (paths, packages).
 Use them on a workstation or the lab VM; a public host builds its store with
-`FolderSampleStore(..., system_sets=False)` (Rulezet: `RULE_TESTS_SYSTEM_SETS`, off in production)
+`FolderSampleStore(..., system_sets=False)` (or a function, read live; Rulezet: the admin setting `editor.test_system_sets`, off by default)
 and tests on sets you provide (`add-set`, the lab VM).
 
 **Other formats.** A set declares the format it is for (`"format"`), its samples are whatever that

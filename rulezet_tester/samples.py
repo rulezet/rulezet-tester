@@ -104,9 +104,17 @@ class FolderSampleStore(SampleStore):
         self.roots = [Path(r).resolve() for r in roots if r]
         self.max_size = max_size
         # system-folder sets show what is installed on the machine (paths, packages): fine on a
-        # workstation or the lab VM, never on a public server — the host switches them off there
+        # workstation or the lab VM, never on a public server — the host switches them off there.
+        # A boolean, or a function read on every call (a host setting an admin can change live).
         self.system_sets = system_sets
         self._hashes = {}
+
+    def _system_sets_on(self):
+        value = self.system_sets
+        try:
+            return bool(value()) if callable(value) else bool(value)
+        except Exception:
+            return False              # cannot tell: the safe answer
 
     def _set_dirs(self):
         for root in self.roots:
@@ -124,7 +132,7 @@ class FolderSampleStore(SampleStore):
         kind = meta.get('kind')
         if kind not in KINDS:
             return None
-        if (meta.get('path') or meta.get('paths')) and not self.system_sets:
+        if (meta.get('path') or meta.get('paths')) and not self._system_sets_on():
             return None             # system-folder sets switched off (public server)
         system = _system_folder(meta) if kind == 'benign' else None
         if (meta.get('path') or meta.get('paths')) and not system:

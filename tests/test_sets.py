@@ -114,3 +114,13 @@ def test_system_sets_can_be_switched_off(tmp_path, system_root):
     make_set(sets, 'docs', {'paths': [str(system_root / 'share')], 'recursive': True, 'types': ['pdf']})
     assert FolderSampleStore(sets, system_sets=False).sets('yara') == []
     assert FolderSampleStore(sets, system_sets=False).samples('docs') == []
+
+
+def test_system_sets_switch_read_live(tmp_path, system_root):
+    sets = tmp_path / 'sets'
+    make_set(sets, 'docs', {'paths': [str(system_root / 'share')], 'recursive': True, 'types': ['pdf']})
+    switch = {'on': False}
+    store = FolderSampleStore(sets, system_sets=lambda: switch['on'])
+    assert store.sets('yara') == []
+    switch['on'] = True
+    assert [s['id'] for s in store.sets('yara')] == ['docs']
