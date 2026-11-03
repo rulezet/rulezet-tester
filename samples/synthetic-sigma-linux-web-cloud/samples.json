@@ -1,0 +1,22 @@
+[
+  {
+    "file": "linux_process.jsonl",
+    "label": "Linux process_creation — reverse shell, curl piped to a shell"
+  },
+  {
+    "file": "linux_auditd.jsonl",
+    "label": "auditd — EXECVE records (insmod)"
+  },
+  {
+    "file": "proxy_webserver.jsonl",
+    "label": "proxy / webserver — scripting user agents, path traversal"
+  },
+  {
+    "file": "aws_cloudtrail.jsonl",
+    "label": "AWS CloudTrail — trail stopped"
+  },
+  {
+    "file": "app_logs.jsonl",
+    "label": "Application logs — Log4Shell strings"
+  }
+]

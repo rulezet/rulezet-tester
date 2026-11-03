@@ -1,0 +1,2 @@
+{"EventID": 4624, "Channel": "Security", "TargetUserName": "alice", "LogonType": 2, "IpAddress": "-"}
+{"EventID": 4732, "Channel": "Security", "SubjectUserName": "admin", "TargetUserName": "Helpdesk", "MemberName": "CN=bob,OU=Users,DC=corp,DC=local"}

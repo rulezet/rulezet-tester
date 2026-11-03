@@ -1,0 +1,9 @@
+{
+  "name": "Synthetic \u2014 Linux, web and cloud events (Sigma)",
+  "format": "sigma",
+  "kind": "synthetic",
+  "description": "Crafted events: Linux reverse shells and auditd, proxy and web server requests, AWS CloudTrail, application logs with exploit strings. Safe: text only.",
+  "labels": {},
+  "tlp": "clear",
+  "source": "rulezet-tester"
+}

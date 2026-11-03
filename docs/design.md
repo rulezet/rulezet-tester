@@ -90,7 +90,7 @@ What `start()` and `state()` return, and what the HTTP API sends:
 |---|---|
 | YARA | `{ kind: 'offset', offset, length }`, or `{ kind: 'file' }` for a condition without strings |
 | Suricata (planned) | `{ kind: 'packet', packet, flow }` with `item` = the sid |
-| Sigma (planned) | `{ kind: 'event', index, fields }` |
+| Sigma | `{ kind: 'event', index, fields }` with `item` = the search identifiers that matched (see §5.1) |
 | Log formats (planned) | `{ kind: 'line', line }` |
 
 ### 3.2 Driver
@@ -212,3 +212,21 @@ subprocesses, inside the same sandbox; their binary folder is added to the read-
 | 4 | Relevance: choose the sets from the rule (file type it targets, tags / CVE / ATT&CK) — next, see Rulezet's docs/future/yara_editor.md §8 | |
 | 5 | Lab VM for real malware: encrypted samples scanned in memory, SSH agent + `RemoteLab`, provisioning, `lab-check`, MalwareBazaar import ([lab.md](lab.md)) | done (provisioning not yet run on a real VM) |
 | 6 | Suricata driver (pcap) — proof that a new format needs nothing else | |
+
+### 5.1 Sigma
+
+`SigmaDriver` (`drivers.py`, engine: pySigma). Samples are events: JSON Lines (one JSON object per
+line), a JSON array or one JSON object (`sample_kind = 'events'`). pySigma parses the rule (several
+rules: one per `---` document) and returns its condition tree with every modifier applied
+(`contains` / `startswith` / `endswith` as wildcards, `windash` and `base64offset` as expansions,
+`re` with its flags, `cidr`, `gt` / `lt`, `exists`, `fieldref`, `cased`); the driver only evaluates
+that tree, so a rule means here what it means to pySigma (and to Rulezet's validation). Matching is
+case-insensitive unless `|cased`; a field is found by exact name, dotted path (`user.name`) or in
+another case; a list value matches when one item does; keywords are searched inside every value.
+Not supported: correlation rules, timestamp-part modifiers (no match). A hit is one matching event:
+`item` = the search identifiers that matched it, `where.fields` = the event values those looked at
+(200 characters each). Shipped sets: `synthetic-sigma-windows`, `synthetic-sigma-linux-web-cloud`
+(crafted attacks), `benign-sigma-windows`, `benign-sigma-linux-web-cloud` (everyday activity: a
+match there is a false positive). Every template of the editor's Sigma pack fires on its synthetic
+event and stays clean on the benign sets. EVTX: convert to JSON first (e.g. `evtx_dump -o jsonl`).
+

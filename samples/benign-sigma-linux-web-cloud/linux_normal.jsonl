@@ -1,0 +1,3 @@
+{"Image": "/usr/bin/apt-get", "CommandLine": "apt-get -y upgrade", "User": "root"}
+{"Image": "/usr/sbin/cron", "CommandLine": "/usr/sbin/CRON -f", "User": "root"}
+{"type": "EXECVE", "a0": "ls", "a1": "-la"}

@@ -1,0 +1,4 @@
+{"EventID": 13, "EventType": "SetValue", "Image": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe", "TargetObject": "HKU\\S-1-5-21-1\\Software\\Google\\Chrome\\PreferenceMACs", "Details": "DWORD (0x00000001)"}
+{"EventID": 13, "EventType": "SetValue", "Image": "C:\\Program Files\\OneDrive\\OneDrive.exe", "TargetObject": "HKU\\S-1-5-21-1\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\OneDrive", "Details": "\"C:\\Program Files\\OneDrive\\OneDrive.exe\" /background"}
+{"EventID": 22, "Image": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe", "QueryName": "www.google.com", "QueryStatus": "0"}
+{"EventID": 22, "Image": "C:\\Windows\\System32\\svchost.exe", "QueryName": "settings-win.data.microsoft.com", "QueryStatus": "0"}

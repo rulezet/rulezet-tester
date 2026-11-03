@@ -1,0 +1,2 @@
+{"eventSource": "s3.amazonaws.com", "eventName": "GetObject", "sourceIPAddress": "192.0.2.10", "awsRegion": "eu-west-1"}
+{"eventSource": "cloudtrail.amazonaws.com", "eventName": "LookupEvents", "sourceIPAddress": "192.0.2.10", "awsRegion": "eu-west-1"}

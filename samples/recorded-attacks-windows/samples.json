@@ -1,0 +1,38 @@
+[
+  {
+    "file": "cmd_sharpview_pcre_net.jsonl.gz",
+    "label": "SharpView via PCRE.NET (T1087 / T1059) \u2014 267 events"
+  },
+  {
+    "file": "psh_powershell_httplistener.jsonl.gz",
+    "label": "PowerShell HttpListener (T1059.001) \u2014 110 events"
+  },
+  {
+    "file": "cmd_lsass_memory_dumpert_syscalls.jsonl.gz",
+    "label": "LSASS memory dump with Dumpert syscalls (T1003.001) \u2014 118 events"
+  },
+  {
+    "file": "cmd_psexec_lsa_secrets_dump.jsonl.gz",
+    "label": "PsExec then LSA secrets dump (T1003.004) \u2014 286 events"
+  },
+  {
+    "file": "cmd_sam_copy_esentutl.jsonl.gz",
+    "label": "SAM copied with esentutl (T1003.002) \u2014 915 events"
+  },
+  {
+    "file": "cmd_bitsadmin_download_psh_script.jsonl.gz",
+    "label": "bitsadmin downloads a PowerShell script (T1197) \u2014 424 events"
+  },
+  {
+    "file": "cmd_mshta_vbscript_execute_psh.jsonl.gz",
+    "label": "mshta runs VBScript that starts PowerShell (T1218.005) \u2014 1127 events"
+  },
+  {
+    "file": "cmd_netsh_fw_mod_open_ports.jsonl.gz",
+    "label": "netsh opens firewall ports (T1562.004) \u2014 2366 events"
+  },
+  {
+    "file": "cmd_userinitmprlogonscript_batch.jsonl.gz",
+    "label": "UserInitMprLogonScript persistence (T1037.001) \u2014 122 events"
+  }
+]

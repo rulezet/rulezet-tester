@@ -1,0 +1,14 @@
+[
+  {
+    "file": "linux_normal.jsonl",
+    "label": "Linux — updates, cron, ssh"
+  },
+  {
+    "file": "web_normal.jsonl",
+    "label": "proxy / webserver — browsers, normal pages"
+  },
+  {
+    "file": "aws_normal.jsonl",
+    "label": "AWS CloudTrail — everyday calls"
+  }
+]

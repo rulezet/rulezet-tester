@@ -43,7 +43,7 @@ def test_store_lists_shipped_sets():
     sets = {s['id']: s for s in store.sets('yara')}
     assert sets['benign-text']['kind'] == 'benign'
     assert sets['synthetic-yara']['count'] == 5
-    assert store.sets('sigma') == []
+    assert store.sets('suricata') == []
     samples = store.samples('benign-text')
     assert all(s['expected'] == 'no_match' and len(s['sha256']) == 64 for s in samples)
 
@@ -110,7 +110,7 @@ def test_start_refuses(text, sets, message):
 
 def test_unknown_format():
     with pytest.raises(TestError, match='No test engine'):
-        service().start('sigma', 'title: x', ['benign-text'])
+        service().start('suricata', 'alert ip any any -> any any (sid:1;)', ['benign-text'])
 
 
 def test_unavailable_sandbox_hides_tests():
@@ -146,7 +146,7 @@ def test_blueprint_endpoints():
     c = app.test_client()
     sets = c.get('/test/sets?format=yara').json
     assert sets['available'] and {s['id'] for s in sets['sets']} >= {'benign-text', 'synthetic-yara'}
-    assert c.get('/test/sets?format=sigma').json == {'available': False, 'sets': []}
+    assert c.get('/test/sets?format=suricata').json == {'available': False, 'sets': []}
     res = c.post('/test/', json={'format': 'yara', 'text': RULE, 'sets': ['benign-text']})
     assert res.status_code == 202
     run_id = res.json['id']

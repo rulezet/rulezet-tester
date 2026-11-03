@@ -1,0 +1,2 @@
+{"EventID": 4625, "Channel": "Security", "TargetUserName": "administrator", "LogonType": 3, "IpAddress": "192.0.2.19", "Status": "0xc000006d"}
+{"EventID": 4728, "Channel": "Security", "SubjectUserName": "svc_backup", "TargetUserName": "Domain Admins", "MemberName": "CN=mallory,OU=Users,DC=corp,DC=local"}

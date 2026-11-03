@@ -1,0 +1,11 @@
+{
+  "name": "Recorded attacks \u2014 Windows (OTRF Security-Datasets)",
+  "format": "sigma",
+  "kind": "synthetic",
+  "description": "Real Windows hosts recorded while an attack technique ran (Sysmon, Security, PowerShell events), from OTRF Security-Datasets (MIT). Each recording also holds the normal activity around the attack.",
+  "labels": {
+    "product": "windows"
+  },
+  "tlp": "clear",
+  "source": "https://github.com/OTRF/Security-Datasets"
+}

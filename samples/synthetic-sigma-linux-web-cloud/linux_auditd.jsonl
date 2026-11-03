@@ -1,0 +1,1 @@
+{"type": "EXECVE", "a0": "insmod", "a1": "/tmp/rk.ko", "key": "modules"}

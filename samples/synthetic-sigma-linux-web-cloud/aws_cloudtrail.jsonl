@@ -1,0 +1,1 @@
+{"eventSource": "cloudtrail.amazonaws.com", "eventName": "StopLogging", "userIdentity": {"type": "IAMUser", "arn": "arn:aws:iam::111122223333:user/mallory"}, "sourceIPAddress": "192.0.2.19", "awsRegion": "eu-west-1"}

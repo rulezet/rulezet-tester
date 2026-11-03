@@ -1,0 +1,2 @@
+{"EventID": 22, "Image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe", "QueryName": "upload.transfer.sh", "QueryStatus": "0"}
+{"EventID": 3, "Image": "C:\\Windows\\System32\\notepad.exe", "Initiated": "true", "DestinationIp": "192.0.2.150", "DestinationPort": 443, "Protocol": "tcp"}

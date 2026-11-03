@@ -1,0 +1,14 @@
+[
+  {
+    "file": "process_creation_normal.jsonl",
+    "label": "process_creation — everyday programs"
+  },
+  {
+    "file": "registry_dns_normal.jsonl",
+    "label": "registry_set / dns_query — software settings, Microsoft and Google domains"
+  },
+  {
+    "file": "security_normal.jsonl",
+    "label": "Security log — successful logons, a member added to a helpdesk group"
+  }
+]

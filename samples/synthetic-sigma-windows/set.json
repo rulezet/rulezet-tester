@@ -1,0 +1,11 @@
+{
+  "name": "Synthetic \u2014 Windows events (Sigma)",
+  "format": "sigma",
+  "kind": "synthetic",
+  "description": "Crafted Windows events (Sysmon / Security field names, JSON Lines): LOLBins, Office spawning a shell, Run keys, DNS, PowerShell script blocks, privileged group changes. Safe: text only. They show what a rule matches.",
+  "labels": {
+    "product": "windows"
+  },
+  "tlp": "clear",
+  "source": "rulezet-tester"
+}

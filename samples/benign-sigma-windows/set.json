@@ -1,0 +1,11 @@
+{
+  "name": "Benign \u2014 Windows activity (Sigma)",
+  "format": "sigma",
+  "kind": "benign",
+  "description": "Ordinary Windows events: Explorer, browsers, updates, admin PowerShell, Office opening documents, normal DNS. A rule that matches here is too broad.",
+  "labels": {
+    "product": "windows"
+  },
+  "tlp": "clear",
+  "source": "rulezet-tester"
+}

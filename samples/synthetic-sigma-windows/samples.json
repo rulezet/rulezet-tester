@@ -1,0 +1,30 @@
+[
+  {
+    "file": "process_creation_lolbins.jsonl",
+    "label": "process_creation — LOLBins (certutil, mshta, rundll32, regsvr32, bitsadmin, encoded PowerShell)"
+  },
+  {
+    "file": "process_creation_office_child.jsonl",
+    "label": "process_creation — Word / Excel starting a shell (macro)"
+  },
+  {
+    "file": "registry_set_run_keys.jsonl",
+    "label": "registry_set — Run keys pointing to a temporary folder"
+  },
+  {
+    "file": "file_event_startup.jsonl",
+    "label": "file_event — script dropped in the Startup folder"
+  },
+  {
+    "file": "network_dns.jsonl",
+    "label": "dns_query / network_connection — file sharing domains, Notepad going online"
+  },
+  {
+    "file": "ps_script_cradle.jsonl",
+    "label": "ps_script — download cradle in a script block"
+  },
+  {
+    "file": "security_privileged_groups.jsonl",
+    "label": "Security log — failed logons, a member added to Domain Admins"
+  }
+]

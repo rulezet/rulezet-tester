@@ -1,0 +1,9 @@
+{
+  "name": "Benign \u2014 Linux, web and cloud activity (Sigma)",
+  "format": "sigma",
+  "kind": "benign",
+  "description": "Ordinary events: package updates, cron, browsers, normal web requests, everyday CloudTrail calls. A rule that matches here is too broad.",
+  "labels": {},
+  "tlp": "clear",
+  "source": "rulezet-tester"
+}
